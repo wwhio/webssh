@@ -536,17 +536,26 @@ class WsockHandler(MixinHandler, tornado.websocket.WebSocketHandler):
         self.src_addr = self.get_client_addr()
         logging.info('Connected from {}:{}'.format(*self.src_addr))
 
-        workers = clients.get(self.src_addr[0])
-        if not workers:
-            self.close(reason='Websocket authentication failed.')
-            return
+        #### work around for web vpn
+        # workers = clients.get(self.src_addr[0])
+        # if not workers:
+        #     self.close(reason='Websocket authentication failed.')
+        #     return
+        #### end
 
         try:
             worker_id = self.get_value('id')
         except (tornado.web.MissingArgumentError, InvalidValueError) as exc:
             self.close(reason=str(exc))
         else:
-            worker = workers.get(worker_id)
+            #### work around for web vpn
+            worker = None
+            for workers in clients.values():
+                worker = workers.get(worker_id)
+                if worker:
+                    break
+            #### end
+
             if worker:
                 workers[worker_id] = None
                 self.set_nodelay(True)
